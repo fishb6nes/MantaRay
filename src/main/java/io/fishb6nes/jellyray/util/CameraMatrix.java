@@ -42,8 +42,9 @@ public class CameraMatrix {
         buffer = context.createFloatBuffer(MATRIX_SIZE, CLMemory.Mem.WRITE_ONLY);
         update(getIdentityMatrix());
 
-        position = new Vector3f();
         direction = new Vector3f(0, 0, -1);
+        position = new Vector3f(0, 0, 50);
+        moveBackward(); // update matrix
     }
 
     public CLBuffer<FloatBuffer> getBuffer() {
