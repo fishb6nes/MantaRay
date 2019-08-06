@@ -260,7 +260,7 @@ void TraceBox(Ray *ray, Box *box) {
         float min = INFINITY;
         float3 direction = ray->intersection - box->center;
 
-        // for(int i = 0; i < 3; ++i)
+        // for(int i = 0; i < 3; i++)
         { // i = 0
             float distance = fabs(box->minimumExtent.x - fabs(direction.x));
             if (distance < min) {
@@ -329,15 +329,15 @@ void TracePlane(Ray *ray, Plane *plane) {
         // ray->material = plane->material;
 
         // checkered plane hack
-        Material testWhite = CreateMaterial((float4)(1, 1, 1, 1), 0.1f, 0);
-        Material testBlack = CreateMaterial((float4)(0, 0, 0, 0), 0.1f, 0);
+        Material planeWhite = CreateMaterial((float4)(1, 1, 1, 1), 0.1f, 0);
+        Material planeBlack = CreateMaterial((float4)(0, 0, 0, 0), 0.1f, 0);
         float3 p = ray->origin + t * ray->direction;
         if (plane->normal.y == 1) {
             int3 point = (int3)(round(p.x * 0.1f), 0, round(p.z * 0.1f));
-            ray->material = abs(point.x) % 2 == abs(point.z) % 2 ? &testWhite : &testBlack;
+            ray->material = abs(point.x) % 2 == abs(point.z) % 2 ? &planeWhite : &planeBlack;
         } else {
             int3 point = (int3)(0, round(p.y * 0.1f) + 1, round(p.z * 0.1f));
-            ray->material = abs(point.y) % 2 == abs(point.z) % 2 ? &testWhite : &testBlack;
+            ray->material = abs(point.y) % 2 == abs(point.z) % 2 ? &planeWhite : &planeBlack;
         }
     }
 }
@@ -503,5 +503,5 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
     int offset = (globalIdX + globalIdY * displayWidth) * 3;
     output[offset++] = pixel.x;
     output[offset++] = pixel.y;
-    output[offset] = pixel.z;
+    output[offset  ] = pixel.z;
 }
