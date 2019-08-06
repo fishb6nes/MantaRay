@@ -18,9 +18,9 @@
 #define WHITE               (float4)(1, 1, 1, 1)
 #define BLACK               (float4)(0, 0, 0, 1)
 
-#define LIGHT_COUNT 1
-#define PLANE_COUNT 1
-#define SPHERE_COUNT 7
+#define LIGHT_COUNT         1
+#define PLANE_COUNT         1
+#define SPHERE_COUNT        7
 
 float3 MultiplyVectorByMatrix(float3 vector, const global float *matrix) {
     float3 result;
