@@ -18,6 +18,10 @@
 #define WHITE               (float4)(1, 1, 1, 1)
 #define BLACK               (float4)(0, 0, 0, 1)
 
+#define LIGHT_COUNT 1
+#define PLANE_COUNT 1
+#define SPHERE_COUNT 7
+
 float3 MultiplyVectorByMatrix(float3 vector, const global float* matrix) {
     float3 result;
     result.x = vector.x * matrix[0] + vector.y * matrix[1] + vector.z * matrix[2] + matrix[3];
@@ -168,18 +172,21 @@ void TraceSphere(Ray* ray, Sphere* sphere) {
 
     float3 distance = sphere->center - ray->origin;
     float distanceSquared = dot(distance, distance);
-    if(distanceSquared <= sphere->radiusSquared)
+    if(distanceSquared <= sphere->radiusSquared) {
         return;     // ray origin is within or on sphere
+    }
 
     float closestApproach = dot(distance, ray->direction);
-    if(closestApproach <= 0)
+    if(closestApproach <= 0) {
         return;     // sphere center lies behind ray origin, as ray origin lies
                     // outside the sphere (see previous return) it can not intersect
+    }
 
     float halfChordDistanceSquared = sphere->radiusSquared - distanceSquared +
                                      closestApproach * closestApproach;
-    if(halfChordDistanceSquared < 0)
+    if(halfChordDistanceSquared < 0) {
         return;     // ray misses the sphere
+    }
 
     float t = closestApproach - sqrt(halfChordDistanceSquared);
     if(t < ray->t) {
@@ -233,20 +240,23 @@ void TraceBox(Ray* ray, Box* box) {
     TraceBoxSlab(box->minimumExtent.x, box->maximumExtent.x,
                   ray->origin.x, ray->reciprocalDirection.x,
                   &near, &far);
-    if(near > far || far < 0)
+    if(near > far || far < 0) {
         return;
+    }
 
     TraceBoxSlab(box->minimumExtent.y, box->maximumExtent.y,
                   ray->origin.y, ray->reciprocalDirection.y,
                   &near, &far);
-    if(near > far || far < 0)
+    if(near > far || far < 0) {
         return;
+    }
 
     TraceBoxSlab(box->minimumExtent.z, box->maximumExtent.z,
                   ray->origin.z, ray->reciprocalDirection.z,
                   &near, &far);
-    if(near > far || far < 0)
+    if(near > far || far < 0) {
         return;
+    }
 
     if(near < ray->t) {
         ray->t = near;
@@ -254,12 +264,30 @@ void TraceBox(Ray* ray, Box* box) {
 
         float min = INFINITY;
         float3 direction = ray->intersection - box->center;
-        for(int i = 0; i < 3; ++i) {
-            float distance = fabs(box->minimumExtent[i] - fabs(direction[i]));
-            if(distance < min) {
+        
+        // for(int i = 0; i < 3; ++i)
+        { // i = 0
+            float distance = fabs(box->minimumExtent.x - fabs(direction.x));
+            if (distance < min) {
                 min = distance;
                 ray->normal = (float3)(0, 0, 0);
-                ray->normal[i] = signbit(direction[i]) ? -1  : 1;
+                ray->normal.x = signbit(direction.x) ? -1 : 1;
+            }
+        }
+        { // i = 1
+            float distance = fabs(box->minimumExtent.y - fabs(direction.y));
+            if (distance < min) {
+                min = distance;
+                ray->normal = (float3)(0, 0, 0);
+                ray->normal.y = signbit(direction.y) ? -1 : 1;
+            }
+        }
+        { // i = 2
+            float distance = fabs(box->minimumExtent.z - fabs(direction.z));
+            if (distance < min) {
+                min = distance;
+                ray->normal = (float3)(0, 0, 0);
+                ray->normal.z = signbit(direction.z) ? -1 : 1;
             }
         }
 
@@ -289,14 +317,16 @@ Plane CreatePlane(float3 normal, float distance, Material material) {
 
 void TracePlane(Ray* ray, Plane* plane) {
     float direction = dot(plane->normal, ray->direction);
-    if(direction >= 0)
+    if(direction >= 0) {
         return;     // if 0 ray is parallel to plane
                     // if > 0 plane normal points away from ray
+    }
 
     float origin = -(dot(plane->normal, ray->origin) + plane->distance);
     float t = origin / direction;
-    if(t <= 0)
+    if(t <= 0) {
         return;     // ray intersects plane behind or on origin
+    }
 
     if(t < ray->t) {
         ray->t = t;
@@ -362,14 +392,16 @@ bool QuickTraceScene(Ray* ray, float minT,
 
     for(int i = 0; i < planeCount; ++i) {
         TracePlane(ray, &planes[i]);
-        if(ray->t < minT)
+        if(ray->t < minT) {
             return false;
+        }
     }
 
     for(int i = 0; i < sphereCount; ++i) {
         TraceSphere(ray, &spheres[i]);
-        if(ray->t < minT)
+        if(ray->t < minT) {
             return false;
+        }
     }
 
     return true;
@@ -404,16 +436,13 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
     int localId = localIdX + localIdY * get_local_size(X_DIMENSION);
     int localSize = get_local_size(X_DIMENSION) * get_local_size(Y_DIMENSION);
 
-    const int lightCount = 1;
-    Light lights[lightCount];
+    Light lights[LIGHT_COUNT];
     lights[0] = CreateLight((float3)(0, 50, 0), NULL, (float4)(1, 1, 1, 1));
 
-    const int planeCount = 1;
-    Plane planes[planeCount];
+    Plane planes[PLANE_COUNT];
     planes[0] = CreatePlane((float3)(0, 1, 0), 15, CreateMaterial((float4)(1, 1, 1, 1), 0.1f, 0));
 
-    const int sphereCount = 7;
-    Sphere spheres[sphereCount];
+    Sphere spheres[SPHERE_COUNT];
     spheres[0] = CreateSphere((float3)(0, -13, -10), 2, CreateMaterial(RED, 0.33f, 0));
     spheres[1] = CreateSphere((float3)(-4, -13, -10), 2, CreateMaterial(GREEN, 0.33f, 0));
     spheres[2] = CreateSphere((float3)(-8, -13, -10), 2, CreateMaterial(BLUE, 0.33f, 0));
@@ -434,17 +463,17 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
         float refractivity = 0;
         while(ray.depth <= MAX_RAY_DEPTH) {
             float4 c = TraceScene(&ray,
-                                  planes, planeCount,
-                                  spheres, sphereCount);
+                                  planes, PLANE_COUNT,
+                                  spheres, SPHERE_COUNT);
             barrier(CLK_LOCAL_MEM_FENCE);
 
-            for(int i = 0; i < lightCount; ++i) {
+            for(int i = 0; i < LIGHT_COUNT; ++i) {
                 float3 distance = lights[i].origin - ray.intersection;
                 Ray lightRay = CreateRay(ray.intersection, distance);
-                float minT = distance[0] * lightRay.reciprocalDirection[0];
+                float minT = distance.x * lightRay.reciprocalDirection.x;
                 if(QuickTraceScene(&lightRay, minT,
-                                    planes, planeCount,
-                                    spheres, sphereCount)) {
+                                    planes, PLANE_COUNT,
+                                    spheres, SPHERE_COUNT)) {
                     //phong
                     c *= dot(ray.normal, lightRay.direction) * lights[i].color; // diffuse
                     float3 reflect = Reflect(-lightRay.direction, ray.normal);
@@ -461,8 +490,9 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
                 float factor = pow(reflectivity, ray.depth);
                 color += factor * c;
                 color /= 1 + factor;
-            } else
+            } else {
                 color += c;
+            }
 
             if(ray.material != NULL && ray.material->reflectivity > 0) {
                 isReflection = true;
