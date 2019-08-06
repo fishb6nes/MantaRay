@@ -41,7 +41,7 @@ public class JellyRay extends Window {
 		super(TITLE, new CameraMatrix(context));
 
 		queue = context.getMaxFlopsDevice().createCommandQueue();
-		InputStream raytracer = this.getClass().getResourceAsStream("kernels/RayTracer.cl");
+		InputStream raytracer = getClass().getClassLoader().getResourceAsStream("kernel.cl");
 		CLProgram program = context.createProgram(raytracer).build();
 		kernel = program.createCLKernel("RayTracer");
 
