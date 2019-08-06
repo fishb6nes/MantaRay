@@ -22,7 +22,7 @@
 #define PLANE_COUNT 1
 #define SPHERE_COUNT 7
 
-float3 MultiplyVectorByMatrix(float3 vector, const global float* matrix) {
+float3 MultiplyVectorByMatrix(float3 vector, const global float *matrix) {
     float3 result;
     result.x = vector.x * matrix[0] + vector.y * matrix[1] + vector.z * matrix[2] + matrix[3];
     result.y = vector.x * matrix[4] + vector.y * matrix[5] + vector.z * matrix[6] + matrix[7];
@@ -33,7 +33,6 @@ float3 MultiplyVectorByMatrix(float3 vector, const global float* matrix) {
 float3 Reflect(float3 incident, float3 normal) {
     return incident - 2.0f * dot(incident, normal) * normal;
 }
-
 
 
 // ------------------------------------------------------------
@@ -54,7 +53,6 @@ Material CreateMaterial(float4 color, float reflectivity, float refractivity) {
 }
 
 
-
 // ------------------------------------------------------------
 // Ray
 // ------------------------------------------------------------
@@ -71,7 +69,7 @@ typedef struct Ray {
     float t;
     float3 intersection;
     float3 normal;
-    Material* material;
+    Material *material;
 } Ray;
 
 Ray CreateRay(float3 origin, float3 direction) {
@@ -87,20 +85,20 @@ Ray CreateRay(float3 origin, float3 direction) {
     return ray;
 }
 
-void CreatePrimaryRays(RayStub* result,
+void CreatePrimaryRays(RayStub *result,
                        int globalIdX, int globalIdY,
                        int displayWidth, int displayHeight,
                        float aspectRatio, float tanHalfFieldOfView,
-                       const global float* cameraToWorldMatrix) {
+                       const global float *cameraToWorldMatrix) {
 
-    float x = (float)globalIdX + 1.0f / (2.0f * ANTI_ALIASING_DEPTH);
-    float y = (float)globalIdY + 1.0f / (2.0f * ANTI_ALIASING_DEPTH);
-    float offset = 1.0f / (float)ANTI_ALIASING_DEPTH;
+    float x = (float) globalIdX + 1.0f / (2.0f * ANTI_ALIASING_DEPTH);
+    float y = (float) globalIdY + 1.0f / (2.0f * ANTI_ALIASING_DEPTH);
+    float offset = 1.0f / (float) ANTI_ALIASING_DEPTH;
 
-    for(int i = 0; i < ANTI_ALIASING_DEPTH; ++i) {
-        for(int j = 0; j < ANTI_ALIASING_DEPTH; ++j) {
-            float normalizedDeviceCoordinatesX = (x + j * offset) / (float)displayWidth;
-            float normalizedDeviceCoordinatesY = (y + i * offset) / (float)displayHeight;
+    for (int i = 0; i < ANTI_ALIASING_DEPTH; ++i) {
+        for (int j = 0; j < ANTI_ALIASING_DEPTH; ++j) {
+            float normalizedDeviceCoordinatesX = (x + j * offset) / (float) displayWidth;
+            float normalizedDeviceCoordinatesY = (y + i * offset) / (float) displayHeight;
 
             float cameraX = (2.0f * normalizedDeviceCoordinatesX - 1.0f) * aspectRatio * tanHalfFieldOfView;
             float cameraY = (2.0f * normalizedDeviceCoordinatesY - 1.0f) * tanHalfFieldOfView;
@@ -117,12 +115,11 @@ void CreatePrimaryRays(RayStub* result,
     }
 }
 
-Ray CreateReflectionRay(Ray* parent) {
+Ray CreateReflectionRay(Ray *parent) {
     Ray ray = CreateRay(parent->intersection, Reflect(parent->direction, parent->normal));
     ray.depth = parent->depth + 1;
     return ray;
 }
-
 
 
 // ------------------------------------------------------------
@@ -143,7 +140,6 @@ Light CreateLight(float3 origin, float3 direction, float4 color) {
 }
 
 
-
 // ------------------------------------------------------------
 // Sphere
 //
@@ -156,7 +152,7 @@ typedef struct Sphere {
     float3 center;
     float radius;
     float radiusSquared;
-    Material* material;
+    Material *material;
 } Sphere;
 
 Sphere CreateSphere(float3 center, float radius, Material material) {
@@ -168,35 +164,34 @@ Sphere CreateSphere(float3 center, float radius, Material material) {
     return sphere;
 }
 
-void TraceSphere(Ray* ray, Sphere* sphere) {
+void TraceSphere(Ray *ray, Sphere *sphere) {
 
     float3 distance = sphere->center - ray->origin;
     float distanceSquared = dot(distance, distance);
-    if(distanceSquared <= sphere->radiusSquared) {
+    if (distanceSquared <= sphere->radiusSquared) {
         return;     // ray origin is within or on sphere
     }
 
     float closestApproach = dot(distance, ray->direction);
-    if(closestApproach <= 0) {
+    if (closestApproach <= 0) {
         return;     // sphere center lies behind ray origin, as ray origin lies
-                    // outside the sphere (see previous return) it can not intersect
+        // outside the sphere (see previous return) it can not intersect
     }
 
     float halfChordDistanceSquared = sphere->radiusSquared - distanceSquared +
                                      closestApproach * closestApproach;
-    if(halfChordDistanceSquared < 0) {
+    if (halfChordDistanceSquared < 0) {
         return;     // ray misses the sphere
     }
 
     float t = closestApproach - sqrt(halfChordDistanceSquared);
-    if(t < ray->t) {
+    if (t < ray->t) {
         ray->t = t;
         ray->intersection = ray->origin + t * ray->direction - ray->direction * 0.0001f;
         ray->normal = normalize(ray->intersection - sphere->center);
         ray->material = sphere->material;
     }
 }
-
 
 
 // ------------------------------------------------------------
@@ -206,7 +201,7 @@ typedef struct Box {
     float3 minimumExtent;
     float3 maximumExtent;
     float3 center;
-    Material* material;
+    Material *material;
 } Box;
 
 Box CreateBox(float3 minimumExtent, float3 maximumExtent, Material material) {
@@ -221,8 +216,8 @@ Box CreateBox(float3 minimumExtent, float3 maximumExtent, Material material) {
 }
 
 void TraceBoxSlab(float minimumExtent, float maximumExtent,
-                   float origin, float reciprocalDirection,
-                   float* near, float* far) {
+                  float origin, float reciprocalDirection,
+                  float *near, float *far) {
     float t1 = (minimumExtent - origin) * reciprocalDirection;
     float t2 = (maximumExtent - origin) * reciprocalDirection;
     bool flip = t1 > t2;
@@ -233,38 +228,38 @@ void TraceBoxSlab(float minimumExtent, float maximumExtent,
     *far = t2 < *far ? t2 : *far;
 }
 
-void TraceBox(Ray* ray, Box* box) {
+void TraceBox(Ray *ray, Box *box) {
     float near = -INFINITY;
     float far = INFINITY;
 
     TraceBoxSlab(box->minimumExtent.x, box->maximumExtent.x,
-                  ray->origin.x, ray->reciprocalDirection.x,
-                  &near, &far);
-    if(near > far || far < 0) {
+                 ray->origin.x, ray->reciprocalDirection.x,
+                 &near, &far);
+    if (near > far || far < 0) {
         return;
     }
 
     TraceBoxSlab(box->minimumExtent.y, box->maximumExtent.y,
-                  ray->origin.y, ray->reciprocalDirection.y,
-                  &near, &far);
-    if(near > far || far < 0) {
+                 ray->origin.y, ray->reciprocalDirection.y,
+                 &near, &far);
+    if (near > far || far < 0) {
         return;
     }
 
     TraceBoxSlab(box->minimumExtent.z, box->maximumExtent.z,
-                  ray->origin.z, ray->reciprocalDirection.z,
-                  &near, &far);
-    if(near > far || far < 0) {
+                 ray->origin.z, ray->reciprocalDirection.z,
+                 &near, &far);
+    if (near > far || far < 0) {
         return;
     }
 
-    if(near < ray->t) {
+    if (near < ray->t) {
         ray->t = near;
         ray->intersection = ray->origin + near * ray->direction;
 
         float min = INFINITY;
         float3 direction = ray->intersection - box->center;
-        
+
         // for(int i = 0; i < 3; ++i)
         { // i = 0
             float distance = fabs(box->minimumExtent.x - fabs(direction.x));
@@ -297,14 +292,13 @@ void TraceBox(Ray* ray, Box* box) {
 }
 
 
-
 // ------------------------------------------------------------
 // Plane
 // ------------------------------------------------------------
 typedef struct Plane {
     float3 normal;
     float distance;
-    Material* material;
+    Material *material;
 } Plane;
 
 Plane CreatePlane(float3 normal, float distance, Material material) {
@@ -315,20 +309,20 @@ Plane CreatePlane(float3 normal, float distance, Material material) {
     return plane;
 }
 
-void TracePlane(Ray* ray, Plane* plane) {
+void TracePlane(Ray *ray, Plane *plane) {
     float direction = dot(plane->normal, ray->direction);
-    if(direction >= 0) {
+    if (direction >= 0) {
         return;     // if 0 ray is parallel to plane
-                    // if > 0 plane normal points away from ray
+        // if > 0 plane normal points away from ray
     }
 
     float origin = -(dot(plane->normal, ray->origin) + plane->distance);
     float t = origin / direction;
-    if(t <= 0) {
+    if (t <= 0) {
         return;     // ray intersects plane behind or on origin
     }
 
-    if(t < ray->t) {
+    if (t < ray->t) {
         ray->t = t;
         ray->intersection = ray->origin + t * ray->direction;
         ray->normal = plane->normal;
@@ -338,7 +332,7 @@ void TracePlane(Ray* ray, Plane* plane) {
         Material testWhite = CreateMaterial((float4)(1, 1, 1, 1), 0.1f, 0);
         Material testBlack = CreateMaterial((float4)(0, 0, 0, 0), 0.1f, 0);
         float3 p = ray->origin + t * ray->direction;
-        if(plane->normal.y == 1) {
+        if (plane->normal.y == 1) {
             int3 point = (int3)(round(p.x * 0.1f), 0, round(p.z * 0.1f));
             ray->material = abs(point.x) % 2 == abs(point.z) % 2 ? &testWhite : &testBlack;
         } else {
@@ -347,7 +341,6 @@ void TracePlane(Ray* ray, Plane* plane) {
         }
     }
 }
-
 
 
 // ------------------------------------------------------------
@@ -364,20 +357,19 @@ void TraceTriangle(Ray ray, Triangle triangle) {
 }
 
 
-
 // ------------------------------------------------------------
 // Scene
 // ------------------------------------------------------------
-float4 TraceScene(Ray* ray,
-                  Plane* planes, int planeCount,
-                  Sphere* spheres, int sphereCount) {
+float4 TraceScene(Ray *ray,
+                  Plane *planes, int planeCount,
+                  Sphere *spheres, int sphereCount) {
 
-    for(int i = 0; i < planeCount; ++i) {
+    for (int i = 0; i < planeCount; ++i) {
         TracePlane(ray, &planes[i]);
         barrier(CLK_LOCAL_MEM_FENCE);
     }
 
-    for(int i = 0; i < sphereCount; ++i) {
+    for (int i = 0; i < sphereCount; ++i) {
         TraceSphere(ray, &spheres[i]);
         barrier(CLK_LOCAL_MEM_FENCE);
     }
@@ -386,20 +378,20 @@ float4 TraceScene(Ray* ray,
     return color;
 }
 
-bool QuickTraceScene(Ray* ray, float minT,
-                     Plane* planes, int planeCount,
-                     Sphere* spheres, int sphereCount) {
+bool QuickTraceScene(Ray *ray, float minT,
+                     Plane *planes, int planeCount,
+                     Sphere *spheres, int sphereCount) {
 
-    for(int i = 0; i < planeCount; ++i) {
+    for (int i = 0; i < planeCount; ++i) {
         TracePlane(ray, &planes[i]);
-        if(ray->t < minT) {
+        if (ray->t < minT) {
             return false;
         }
     }
 
-    for(int i = 0; i < sphereCount; ++i) {
+    for (int i = 0; i < sphereCount; ++i) {
         TraceSphere(ray, &spheres[i]);
-        if(ray->t < minT) {
+        if (ray->t < minT) {
             return false;
         }
     }
@@ -408,20 +400,19 @@ bool QuickTraceScene(Ray* ray, float minT,
 }
 
 
-
 // ------------------------------------------------------------
 // Kernel
 // ------------------------------------------------------------
 kernel void RayTracer(const int displayWidth, const int displayHeight,
                       const float aspectRatio, const float tanHalfFieldOfView,
-                      const global float* cameraToWorldMatrix,
-                      global float* output) {
+                      const global float *cameraToWorldMatrix,
+                      global float *output) {
 
     int globalIdX = get_global_id(X_DIMENSION);
-    if(globalIdX >= displayWidth)
+    if (globalIdX >= displayWidth)
         return;
     int globalIdY = get_global_id(Y_DIMENSION);
-    if(globalIdY >= displayHeight)
+    if (globalIdY >= displayHeight)
         return;
 
     RayStub primaryRays[ANTI_ALIASING_COUNT];
@@ -452,8 +443,8 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
     spheres[6] = CreateSphere((float3)(10, -11, -5), 4, CreateMaterial((float4)(1, 0, 0, 1), 0.1f, 0));
 
     float4 pixel = BACKGROUND_COLOR;
-    for(int i = 0; i < ANTI_ALIASING_COUNT; ++i) {
-        Ray ray  = CreateRay(primaryRays[i].origin, primaryRays[i].direction);
+    for (int i = 0; i < ANTI_ALIASING_COUNT; ++i) {
+        Ray ray = CreateRay(primaryRays[i].origin, primaryRays[i].direction);
 
         float4 color = BACKGROUND_COLOR;
 
@@ -461,17 +452,17 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
         float reflectivity = 0;
         bool isRefraction = false;
         float refractivity = 0;
-        while(ray.depth <= MAX_RAY_DEPTH) {
+        while (ray.depth <= MAX_RAY_DEPTH) {
             float4 c = TraceScene(&ray,
                                   planes, PLANE_COUNT,
                                   spheres, SPHERE_COUNT);
             barrier(CLK_LOCAL_MEM_FENCE);
 
-            for(int i = 0; i < LIGHT_COUNT; ++i) {
+            for (int i = 0; i < LIGHT_COUNT; ++i) {
                 float3 distance = lights[i].origin - ray.intersection;
                 Ray lightRay = CreateRay(ray.intersection, distance);
                 float minT = distance.x * lightRay.reciprocalDirection.x;
-                if(QuickTraceScene(&lightRay, minT,
+                if (QuickTraceScene(&lightRay, minT,
                                     planes, PLANE_COUNT,
                                     spheres, SPHERE_COUNT)) {
                     //phong
@@ -486,7 +477,7 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
                 }
             }
 
-            if(isReflection) {
+            if (isReflection) {
                 float factor = pow(reflectivity, ray.depth);
                 color += factor * c;
                 color /= 1 + factor;
@@ -494,7 +485,7 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
                 color += c;
             }
 
-            if(ray.material != NULL && ray.material->reflectivity > 0) {
+            if (ray.material != NULL && ray.material->reflectivity > 0) {
                 isReflection = true;
                 reflectivity = ray.material->reflectivity;
                 ray = CreateReflectionRay(&ray);
@@ -505,12 +496,12 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
             barrier(CLK_LOCAL_MEM_FENCE);
         }
 
-        pixel += color / (float)ANTI_ALIASING_COUNT;
+        pixel += color / (float) ANTI_ALIASING_COUNT;
     }
 
     pixel = clamp(pixel, (float4)(0, 0, 0, 0), (float4)(1, 1, 1, 1));
     int offset = (globalIdX + globalIdY * displayWidth) * 3;
     output[offset++] = pixel.x;
     output[offset++] = pixel.y;
-    output[offset  ] = pixel.z;
+    output[offset] = pixel.z;
 }
