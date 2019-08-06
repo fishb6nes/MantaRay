@@ -175,7 +175,7 @@ void TraceSphere(Ray *ray, Sphere *sphere) {
     float closestApproach = dot(distance, ray->direction);
     if (closestApproach <= 0) {
         return;     // sphere center lies behind ray origin, as ray origin lies
-        // outside the sphere (see previous return) it can not intersect
+                    // outside the sphere (see previous return) it can not intersect
     }
 
     float halfChordDistanceSquared = sphere->radiusSquared - distanceSquared +
@@ -313,7 +313,7 @@ void TracePlane(Ray *ray, Plane *plane) {
     float direction = dot(plane->normal, ray->direction);
     if (direction >= 0) {
         return;     // if 0 ray is parallel to plane
-        // if > 0 plane normal points away from ray
+                    // if > 0 plane normal points away from ray
     }
 
     float origin = -(dot(plane->normal, ray->origin) + plane->distance);
@@ -326,7 +326,7 @@ void TracePlane(Ray *ray, Plane *plane) {
         ray->t = t;
         ray->intersection = ray->origin + t * ray->direction;
         ray->normal = plane->normal;
-        //ray->material = plane->material;
+        // ray->material = plane->material;
 
         // checkered plane hack
         Material testWhite = CreateMaterial((float4)(1, 1, 1, 1), 0.1f, 0);
@@ -465,7 +465,7 @@ kernel void RayTracer(const int displayWidth, const int displayHeight,
                 if (QuickTraceScene(&lightRay, minT,
                                     planes, PLANE_COUNT,
                                     spheres, SPHERE_COUNT)) {
-                    //phong
+                    // Phong reflection
                     c *= dot(ray.normal, lightRay.direction) * lights[i].color; // diffuse
                     float3 reflect = Reflect(-lightRay.direction, ray.normal);
                     float3 specular = pow(max(0.f, dot(reflect, -ray.direction)), SPECULAR_POWER);
