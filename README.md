@@ -5,6 +5,7 @@
 ###### This document has been edited for GitHub. 
 
 ![](https://pre00.deviantart.net/03ad/th/pre/i/2014/291/6/0/manta_ray_by_squid_coffee-d83d7d0.png)
+
 Cover art courtesy of [Rin-Sketch](https://www.deviantart.com/rin-sketch).
 
 Abstract
