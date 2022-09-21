@@ -1,4 +1,4 @@
-# JellyRay
+# MantaRay
 
 ### A ray tracing research project.
 
